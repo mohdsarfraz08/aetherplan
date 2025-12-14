@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { Subject, Unit, Subtask, StudyState } from '../types';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import type { Subject, Unit, StudyState } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface StudyContextType extends StudyState {
@@ -13,6 +13,7 @@ interface StudyContextType extends StudyState {
     updateSubtaskDeadline: (subjectId: string, unitId: string, subtaskId: string, deadline: string) => void;
     updateUnitNotes: (subjectId: string, unitId: string, content: string) => void;
     awardXP: (amount: number) => void;
+    resetData: () => void;
 }
 
 const StudyContext = createContext<StudyContextType | undefined>(undefined);
@@ -131,6 +132,16 @@ export const StudyProvider = ({ children }: { children: ReactNode }) => {
 
     const awardXP = (amount: number) => {
         setTotalXP(prev => prev + amount);
+    };
+
+    const resetData = () => {
+        if (confirm('Are you sure you want to delete all data? This cannot be undone.')) {
+            setSubjects(INITIAL_DATA);
+            setTotalXP(0);
+            localStorage.clear();
+            // Force reload to ensure clean state
+            setTimeout(() => window.location.reload(), 100);
+        }
     };
 
     // Helper to fully recalculate a subject's stats based on its units
@@ -342,7 +353,8 @@ export const StudyProvider = ({ children }: { children: ReactNode }) => {
             deleteSubtask,
             updateSubtaskDeadline,
             updateUnitNotes,
-            awardXP
+            awardXP,
+            resetData
         }}>
             {children}
         </StudyContext.Provider>

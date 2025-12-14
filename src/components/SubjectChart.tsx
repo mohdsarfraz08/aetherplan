@@ -1,4 +1,3 @@
-import React from 'react';
 import { Bar } from 'react-chartjs-2';
 import '../lib/chartSetup';
 import { useStudy } from '../context/StudyContext';

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStudy } from '../../context/StudyContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Book, Plus, ArrowRight, Trash2, Check, X } from 'lucide-react';
+import { ArrowLeft, Plus, ArrowRight, Trash2, Check, X } from 'lucide-react';
 
 const COLORS = ['#38BDF8', '#F472B6', '#A78BFA', '#34D399', '#FBBF24', '#FB7185'];
 

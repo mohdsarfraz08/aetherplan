@@ -1,6 +1,7 @@
 export class AudioEngine {
     private audioCtx: AudioContext | null = null;
-    private noiseNode: AudioBufferSourceNode | null = null;
+    private customBuffer: AudioBuffer | null = null;
+    private sourceNode: AudioBufferSourceNode | null = null;
     private gainNode: GainNode | null = null;
 
     constructor() {
@@ -13,47 +14,67 @@ export class AudioEngine {
         }
     }
 
-    public toggleBrownNoise(play: boolean) {
+    public async setCustomAudio(arrayBuffer: ArrayBuffer) {
+        this.init();
+        if (!this.audioCtx) return;
+        try {
+            // Decode the audio data
+            this.customBuffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+        } catch (e) {
+            console.error("Error decoding audio data", e);
+        }
+    }
+
+    public toggleAudio(play: boolean, type: 'brown' | 'custom' = 'brown') {
         this.init();
         if (!this.audioCtx) return;
 
         if (play) {
-            if (this.noiseNode) return; // Already playing
+            if (this.sourceNode) this.sourceNode.stop(); // Stop current if any
 
-            const bufferSize = 2 * this.audioCtx.sampleRate;
-            const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
+            this.sourceNode = this.audioCtx.createBufferSource();
+            this.sourceNode.loop = true;
 
-            // Generate Brown Noise
-            let lastOut = 0;
-            for (let i = 0; i < bufferSize; i++) {
-                const white = Math.random() * 2 - 1;
-                data[i] = (lastOut + (0.02 * white)) / 1.02;
-                lastOut = data[i];
-                data[i] *= 3.5; // Compensate for gain
+            if (type === 'custom' && this.customBuffer) {
+                this.sourceNode.buffer = this.customBuffer;
+            } else {
+                // Generate Brown Noise if type is brown or no custom buffer
+                const bufferSize = 2 * this.audioCtx.sampleRate;
+                const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+
+                let lastOut = 0;
+                for (let i = 0; i < bufferSize; i++) {
+                    const white = Math.random() * 2 - 1;
+                    data[i] = (lastOut + (0.02 * white)) / 1.02;
+                    lastOut = data[i];
+                    data[i] *= 3.5;
+                }
+                this.sourceNode.buffer = buffer;
             }
 
-            this.noiseNode = this.audioCtx.createBufferSource();
-            this.noiseNode.buffer = buffer;
-            this.noiseNode.loop = true;
-
             this.gainNode = this.audioCtx.createGain();
-            this.gainNode.gain.value = 0.1; // Low volume for focus
+            this.gainNode.gain.value = type === 'custom' ? 0.5 : 0.1; // Louder for music, quiet for noise
 
-            this.noiseNode.connect(this.gainNode);
+            this.sourceNode.connect(this.gainNode);
             this.gainNode.connect(this.audioCtx.destination);
-            this.noiseNode.start();
+            this.sourceNode.start();
         } else {
-            if (this.noiseNode) {
-                this.noiseNode.stop();
-                this.noiseNode.disconnect();
-                this.noiseNode = null;
+            if (this.sourceNode) {
+                this.sourceNode.stop();
+                this.sourceNode.disconnect();
+                this.sourceNode = null;
             }
             if (this.gainNode) {
                 this.gainNode.disconnect();
                 this.gainNode = null;
             }
         }
+    }
+
+    // Deprecated wrapper for backward compatibility if needed, but we should update call sites
+    public toggleBrownNoise(play: boolean) {
+        this.toggleAudio(play, 'brown');
     }
 
     public playLevelUp() {

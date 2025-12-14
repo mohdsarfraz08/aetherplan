@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Play, Pause, RotateCcw, X, Target, Volume2, VolumeX } from 'lucide-react';
 import { useStudy } from '../../context/StudyContext';
 import { audio } from '../../lib/audio';
@@ -107,8 +107,8 @@ export const PomodoroTimer = ({ onClose }: PomodoroTimerProps) => {
                                 key={m}
                                 onClick={() => changeMode(m)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${mode === m
-                                        ? 'bg-white/10 text-white shadow-sm'
-                                        : 'text-text-secondary hover:text-white'
+                                    ? 'bg-white/10 text-white shadow-sm'
+                                    : 'text-text-secondary hover:text-white'
                                     }`}
                             >
                                 {m === 'focus' ? 'Focus' : m === 'short' ? 'Short Break' : 'Long Break'}

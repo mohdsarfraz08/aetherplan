@@ -41,7 +41,7 @@ export const Layout = ({ children, currentView, onNavigate }: LayoutProps) => {
                                 animate={{ opacity: isCollapsed ? 0 : 1, width: isCollapsed ? 0 : 'auto' }}
                                 className={`text-xl font-heading font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 whitespace-nowrap hidden lg:block`}
                             >
-                                Antigravity
+                                AetherPlan
                             </motion.span>
                         </div>
                     </div>
