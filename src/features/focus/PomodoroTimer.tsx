@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, RotateCcw, X, Target, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, RotateCcw, X, Target, Volume2, VolumeX, Check } from 'lucide-react';
 import { useStudy } from '../../context/StudyContext';
 import { audio } from '../../lib/audio';
 
@@ -14,6 +14,8 @@ export const PomodoroTimer = ({ onClose }: PomodoroTimerProps) => {
     const [mode, setMode] = useState<'focus' | 'short' | 'long'>('focus');
     const [isActive, setIsActive] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTime, setEditTime] = useState('');
 
     // Audio Toggle Effect
     useEffect(() => {
@@ -53,9 +55,48 @@ export const PomodoroTimer = ({ onClose }: PomodoroTimerProps) => {
     const changeMode = (newMode: 'focus' | 'short' | 'long') => {
         setMode(newMode);
         setIsActive(false);
+        setIsEditing(false); // Cancel edit on mode change
         if (newMode === 'focus') setTimeLeft(25 * 60);
         if (newMode === 'short') setTimeLeft(5 * 60);
         if (newMode === 'long') setTimeLeft(15 * 60);
+    };
+
+    const handleTimeClick = () => {
+        if (isActive) return;
+        setIsEditing(true);
+        setEditTime(formatTime(timeLeft));
+    };
+
+    const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEditTime(e.target.value);
+    };
+
+    const handleTimeSubmit = () => {
+        setIsEditing(false);
+        const [mins, secs] = editTime.split(':').map(Number);
+
+        let newTime = 0;
+        if (!isNaN(mins) && !isNaN(secs)) {
+            newTime = mins * 60 + secs;
+        } else if (!isNaN(mins)) {
+            newTime = mins * 60;
+        } else {
+            // invalid input fallback
+            return;
+        }
+
+        // Clamp values to reasonable limits (e.g. 1 min to 180 mins)
+        if (newTime > 0 && newTime <= 180 * 60) {
+            setTimeLeft(newTime);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleTimeSubmit();
+        } else if (e.key === 'Escape') {
+            setIsEditing(false);
+        }
     };
 
     const formatTime = (seconds: number) => {
@@ -146,11 +187,42 @@ export const PomodoroTimer = ({ onClose }: PomodoroTimerProps) => {
 
                         <div className="text-center z-10">
                             <div className="text-6xl font-heading font-bold text-white tabular-nums tracking-tighter">
-                                {formatTime(timeLeft)}
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={editTime}
+                                        onChange={handleTimeChange}
+                                        onBlur={handleTimeSubmit}
+                                        onKeyDown={handleKeyDown}
+                                        autoFocus
+                                        enterKeyHint="done"
+                                        className="bg-transparent w-full text-center outline-none border-b-2 border-primary-DEFAULT/50 focus:border-primary-DEFAULT"
+                                    />
+                                ) : (
+                                    <span
+                                        onClick={handleTimeClick}
+                                        className={`cursor-pointer transition-opacity hover:opacity-80 ${isActive ? 'cursor-default' : ''}`}
+                                        title={isActive ? "Pause to edit" : "Click to edit time"}
+                                    >
+                                        {formatTime(timeLeft)}
+                                    </span>
+                                )}
                             </div>
                             <div className="text-text-secondary mt-2 flex items-center justify-center gap-2">
-                                <Target size={14} />
-                                <span>{isActive ? 'Stay focused' : 'Ready to start?'}</span>
+                                {isEditing ? (
+                                    <button
+                                        onClick={handleTimeSubmit}
+                                        className="flex items-center gap-2 text-primary-DEFAULT hover:text-white transition-colors font-medium px-3 py-1 rounded-full bg-primary-DEFAULT/10 hover:bg-primary-DEFAULT/20"
+                                    >
+                                        <Check size={14} />
+                                        <span>Save</span>
+                                    </button>
+                                ) : (
+                                    <>
+                                        <Target size={14} />
+                                        <span>{isActive ? 'Stay focused' : 'Ready to start?'}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
